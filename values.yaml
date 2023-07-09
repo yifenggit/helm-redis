@@ -1,0 +1,34 @@
+# Default values for redis.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: registry-vpc.cn-chengdu.aliyuncs.com/buf/redis
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "7.0.11"
+
+volumes:
+  - name: "redis-data"
+    mountPath: "/data"
+    pvcName: "longhorn-redis-pvc"
+
+imagePullSecrets: []
+nameOverride: "redis"
+fullnameOverride: "redis"
+
+service:
+  type: ClusterIP
+  port: 6379
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: 
+  kubernetes.io/hostname: "k3s001"
