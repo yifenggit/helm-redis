@@ -11,9 +11,13 @@ image:
   tag: "7.0.11"
 
 volumes:
-  - name: "redis-data"
-    mountPath: "/data"
-    pvcName: "longhorn-redis-pvc"
+- name: redis-data
+  persistentVolumeClaim:
+    claimName: longhorn-redis-pvc
+
+volumeMounts:
+- name: redis-data
+  mountPath: /data
 
 imagePullSecrets: []
 nameOverride: "redis"

@@ -30,24 +30,14 @@ spec:
         - name: http
           containerPort: {{ .Values.service.port }}
           protocol: TCP
-        {{- if .Values.volumes }}  
-        volumeMounts:
-          {{- range .Values.volumes }}
-        - name: {{ .name }}
-          mountPath: {{ .mountPath }}
-          {{- end }}
+        {{- with .Values.volumeMounts }}  
+        volumeMounts: {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
+      nodeSelector: {{ toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.volumes }}
-      volumes:
-        {{- range .Values.volumes }}
-      - name: {{ .name }}
-        persistentVolumeClaim:
-          claimName: {{ .pvcName }}
-        {{- end }}
+      {{- with .Values.volumes }}
+      volumes: {{ toYaml . | nindent 6 }}
       {{- end }}
 
       
