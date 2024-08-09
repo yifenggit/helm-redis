@@ -4,16 +4,22 @@
 
 replicaCount: 1
 
+
 image:
   repository: registry-vpc.cn-chengdu.aliyuncs.com/buf/redis
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "7.0.11"
 
-volumes:
-- name: redis-data
-  persistentVolumeClaim:
-    claimName: longhorn-redis-pvc
+deployment:
+  enabled: false
+
+# deployment use
+volumes: {}
+# volumes:
+# - name: redis-data
+#   persistentVolumeClaim:
+#     claimName: longhorn-redis-pvc
 
 volumeMounts:
 - name: redis-data
@@ -30,8 +36,35 @@ service:
 autoscaling:
   enabled: false
   minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 65
 
 nodeSelector: {}
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: agent
+          operator: Exists
+
+statefulset:
+  enabled: true
+
+volumeClaimTemplates:
+- metadata:
+    name: redis-data
+  spec:
+    accessModes:
+    - ReadWriteMany
+    storageClassName: longhorn
+    resources:
+      requests:
+        storage: 399Mi

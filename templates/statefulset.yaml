@@ -1,27 +1,35 @@
-{{- if .Values.deployment.enabled }}
+{{- if .Values.statefulset.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "redis.fullname" . }}
   labels:
     {{- include "redis.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "redis.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "redis.fullname" . }}-headless
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  # 默认值是 0
+  minReadySeconds: 10
   template:
     metadata:
       labels:
         {{- include "redis.selectorLabels" . | nindent 8 }}
     spec:
-      restartPolicy: Always
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+      {{- with .Values.affinity }}
+      affinity: {{ tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.volumes }}
+      volumes: {{ toYaml . | nindent 6 }}
+      {{- end }}
+      terminationGracePeriodSeconds: 10
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -34,10 +42,7 @@ spec:
         {{- with .Values.volumeMounts }}  
         volumeMounts: {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector: {{ toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.volumes }}
-      volumes: {{ toYaml . | nindent 6 }}
-      {{- end }}
-{{- end }}
+  {{- with .Values.volumeClaimTemplates }}
+  volumeClaimTemplates: {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end}}
